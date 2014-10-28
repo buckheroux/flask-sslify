@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import request, redirect, current_app
+from flask import request, redirect, current_app, abort as force_abort
 
 YEAR_IN_SECS = 31536000
 
@@ -8,7 +8,7 @@ YEAR_IN_SECS = 31536000
 class SSLify(object):
     """Secures your Flask App."""
 
-    def __init__(self, app=None, age=YEAR_IN_SECS, subdomains=False, permanent=False):
+    def __init__(self, app=None, age=YEAR_IN_SECS, subdomains=False, permanent=False, abort=False):
         self.hsts_age = age
         self.hsts_include_subdomains = subdomains
         self.permanent = permanent
@@ -43,12 +43,13 @@ class SSLify(object):
 
         if not any(criteria):
             if request.url.startswith('http://'):
+                if abort:
+                    force_abort(403)
                 url = request.url.replace('http://', 'https://', 1)
                 code = 302
                 if self.permanent:
                     code = 301
                 r = redirect(url, code=code)
-
                 return r
 
     def set_hsts_header(self, response):
